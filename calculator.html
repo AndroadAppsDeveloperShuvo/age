@@ -1,84 +1,308 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <title>Age Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Age Calculator Pro - By Shuvo</title>
+  
+  <!-- Libraries for Confetti and Screenshot -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <style>
+    :root {
+      --bg-color: #e2e8f0;
+      --card-bg: #ffffff;
+      --text-main: #000000;
+      --text-label: #1e293b;
+      --primary: #1d4ed8;
+      --primary-hover: #1e3a8a;
+      --border-color: #94a3b8;
+      --input-bg: #f8fafc;
+      --box-border: #2563eb;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg-color: #020617;
+      --card-bg: #0f172a;
+      --text-main: #ffffff;
+      --text-label: #f1f5f9;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --border-color: #475569;
+      --input-bg: #1e293b;
+      --box-border: #3b82f6;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; transition: background-color 0.3s, color 0.3s; }
+
     body {
-      background: #f0f2f5;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
     }
-    .container {
-      background: #fff;
-      padding: 30px 20px;
-      border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      max-width: 400px;
+
+    .calculator-card {
+      background: var(--card-bg);
       width: 100%;
-      text-align: center;
+      max-width: 420px;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
     }
-    .container h1 {
+
+    /* Header & Settings */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .header h1 { font-size: 24px; font-weight: 800; color: var(--text-main); }
+    
+    .settings-btn { background: transparent; border: none; color: var(--text-main); cursor: pointer; padding: 8px; border-radius: 50%; }
+    .settings-btn:hover { background: var(--border-color); }
+    .settings-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+    .settings-dropdown {
+      position: absolute; top: 70px; right: 30px; background: var(--card-bg); border: 2px solid var(--border-color);
+      box-shadow: var(--shadow-lg); border-radius: 12px; padding: 15px; width: 200px; display: none; z-index: 10;
+    }
+    .settings-dropdown.active { display: block; }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 15px; font-weight: 700;}
+    
+    /* Toggle */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); border-radius: 34px; transition: .4s; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Inputs */
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; font-size: 15px; color: var(--text-label); margin-bottom: 8px; font-weight: 700; }
+    input[type="text"], input[type="date"] {
+      width: 100%; padding: 14px; border: 2px solid var(--border-color); background: var(--input-bg);
+      color: var(--text-main); border-radius: 10px; font-size: 16px; outline: none; font-weight: 600;
+    }
+    input:focus { border-color: var(--primary); }
+
+    .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn {
+      flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: #ffffff; }
+    .btn-primary:hover { background: var(--primary-hover); transform: scale(0.98); }
+    .btn-secondary { background: transparent; border: 2px solid var(--primary); color: var(--text-main); }
+    .btn-secondary:hover { background: var(--primary); color: #ffffff; }
+
+    /* Result Section */
+    .result-container { 
+      display: none; 
+      margin-top: 25px; 
+      padding-top: 20px; 
+      border-top: 3px solid var(--border-color);
+      opacity: 1 !important; 
+    }
+    .result-container.show { 
+      display: block; 
+      animation: popUp 0.4s ease forwards;
+    }
+    
+    .user-greeting { 
+      text-align: center; 
+      font-size: 26px; 
+      font-weight: 900; 
       margin-bottom: 20px;
-      color: #333;
+      color: #ff0055; 
+      background: linear-gradient(45deg, #ff0055, #6a11cb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    .container input[type="date"] {
-      width: 90%;
-      max-width: 300px;
-      padding: 12px;
+    [data-theme="dark"] .user-greeting {
+      background: linear-gradient(45deg, #ff758c, #ff7eb3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .age-boxes { display: flex; gap: 12px; margin-bottom: 20px; }
+    .age-box { 
+      flex: 1; 
+      background: var(--input-bg); 
+      border: 2px solid var(--box-border); 
+      padding: 20px 5px; 
+      border-radius: 12px; 
+      text-align: center; 
+    }
+    .age-box .num { 
+      display: block; 
+      font-size: 32px; 
+      font-weight: 900; 
+      color: var(--primary); 
+      margin-bottom: 5px; 
+    }
+    .age-box .text { 
+      font-size: 14px; 
+      font-weight: 800; 
+      color: var(--text-main); 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
+
+    /* Next Birthday Card */
+    .next-bday-card { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px; 
+      padding: 20px; 
+      text-align: center; 
       margin-bottom: 15px;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      font-size: 15px;
-      transition: border-color 0.3s;
+      box-shadow: 0 8px 15px rgba(118, 75, 162, 0.4);
+      color: #ffffff;
     }
-    .container input:focus {
-      border-color: #28a745;
-      outline: none;
+    .next-bday-card .title { font-size: 15px; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; color: #e2e8f0; }
+    .next-bday-card .emoji { font-size: 36px; margin-bottom: 8px; }
+    .next-bday-card .value { font-size: 22px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+
+    .total-days { text-align: center; font-size: 16px; font-weight: 700; color: var(--text-main); display: none; margin-bottom: 15px; background: var(--input-bg); padding: 12px; border-radius: 8px; border: 2px solid var(--border-color);}
+
+    /* Saved Profiles */
+    .saved-profiles { margin-top: 25px; border-top: 2px solid var(--border-color); padding-top: 15px; }
+    .saved-profiles h3 { font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; }
+    .profile-list { display: flex; gap: 10px; flex-wrap: wrap; }
+    .profile-chip {
+      background: var(--card-bg); border: 2px solid var(--box-border); padding: 8px 16px;
+      border-radius: 20px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
     }
-    .container button {
-      background: #28a745;
-      color: #fff;
-      border: none;
-      padding: 12px 30px;
-      border-radius: 5px;
-      font-size: 15px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .container button:hover {
-      background: #218838;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 18px;
-      color: #333;
+    .profile-chip:hover { background: var(--primary); color: #fff; }
+    .delete-chip { color: #ef4444; font-weight: 900; font-size: 20px; line-height: 1; padding: 0 4px; border-radius: 50%; }
+    
+    /* Footer */
+    .footer { margin-top: 25px; text-align: center; font-size: 15px; color: var(--text-label); font-weight: 700; }
+    .footer span { color: var(--primary); font-weight: 900; }
+
+    @keyframes popUp { 
+      from { opacity: 1; transform: scale(0.95); } 
+      to { opacity: 1; transform: scale(1); } 
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Age Calculator</h1>
-    <input type="date" id="birthDate">
-    <br/>
-    <button onclick="calculateAge()">Calculate Age</button>
-    <div id="result"></div>
+
+  <div class="calculator-card" id="captureArea">
+    
+    <!-- Header -->
+    <div class="header">
+      <h1>Age Calculator</h1>
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettings()" title="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+      </button>
+
+      <div class="settings-dropdown" id="settingsMenu">
+        <div class="setting-item">
+          <span>Dark Mode</span>
+          <label class="switch"><input type="checkbox" id="themeToggle" onchange="toggleTheme()"><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <span>Show Total Days</span>
+          <label class="switch"><input type="checkbox" id="detailsToggle" onchange="toggleDetails()"><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-group">
+      <label>Name (Optional)</label>
+      <input type="text" id="personName" placeholder="Enter name (e.g., Shuvo)">
+    </div>
+    <div class="input-group">
+      <label>Date of Birth</label>
+      <input type="date" id="birthDate">
+    </div>
+
+    <div class="btn-group">
+      <button onclick="calculateAge()" class="btn btn-primary">Calculate Age</button>
+      <button onclick="saveProfile()" class="btn btn-secondary" id="saveBtn">Save</button>
+    </div>
+
+    <!-- Result Area -->
+    <div class="result-container" id="resultContainer">
+      <div class="user-greeting" id="greetingName"></div>
+      
+      <div class="age-boxes">
+        <div class="age-box"><span class="num" id="r-years">0</span><span class="text">Years</span></div>
+        <div class="age-box"><span class="num" id="r-months">0</span><span class="text">Months</span></div>
+        <div class="age-box"><span class="num" id="r-days">0</span><span class="text">Days</span></div>
+      </div>
+
+      <!-- Full Width Next Birthday Card (Gradient) -->
+      <div class="next-bday-card">
+        <div class="title">Next Birthday In</div>
+        <div class="emoji">🎂</div>
+        <div class="value" id="next-bday">0 Months 0 Days</div>
+      </div>
+
+      <div class="total-days" id="extraDetails">
+        Total Days Lived: <span id="r-total-days" style="color: var(--primary); font-size: 18px; font-weight: 900;">0</span> days
+      </div>
+
+      <button onclick="downloadCard()" class="btn btn-primary" id="downloadBtn" style="width: 100%; margin-top: 10px; background: #10b981; border: none;">
+        📸 Screenshot Card
+      </button>
+    </div>
+
+    <!-- Saved Profiles List -->
+    <div class="saved-profiles" id="savedSection" style="display: none;">
+      <h3>Saved Profiles</h3>
+      <div class="profile-list" id="profileList"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">This Site Developed By <span>Developer Shuvo</span></div>
   </div>
 
   <script>
-    function calculateAge() {
-      const birthDate = document.getElementById('birthDate').value;
-      if (!birthDate) {
-        alert('Please select your birth date!');
-        return;
-      }
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      if(savedTheme === 'dark') document.getElementById('themeToggle').checked = true;
+      loadProfiles();
+    });
 
-      const birth = new Date(birthDate);
+    function toggleSettings() { document.getElementById('settingsMenu').classList.toggle('active'); }
+    
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('settingsMenu');
+      const btn = document.getElementById('settingsBtn');
+      if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.remove('active');
+      }
+    });
+
+    function toggleTheme() {
+      const isDark = document.getElementById('themeToggle').checked;
+      const newTheme = isDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+    
+    function toggleDetails() {
+      const isChecked = document.getElementById('detailsToggle').checked;
+      document.getElementById('extraDetails').style.display = isChecked ? 'block' : 'none';
+    }
+
+    function calculateAge() {
+      const nameVal = document.getElementById('personName').value;
+      const birthDateVal = document.getElementById('birthDate').value;
+      
+      if (!birthDateVal) { alert('Please select a birth date!'); return; }
+
+      const birth = new Date(birthDateVal);
       const today = new Date();
+      if (birth > today) { alert('Birth date cannot be in the future!'); return; }
 
       let years = today.getFullYear() - birth.getFullYear();
       let months = today.getMonth() - birth.getMonth();
@@ -88,14 +312,141 @@
         months--;
         days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
       }
-
       if (months < 0) {
         years--;
         months += 12;
       }
 
-      document.getElementById('result').innerText =
-        `You are ${years} years, ${months} months, and ${days} days old.`;
+      document.getElementById('r-years').innerText = years;
+      document.getElementById('r-months').innerText = months;
+      document.getElementById('r-days').innerText = days;
+      
+      if(nameVal) {
+        document.getElementById('greetingName').innerText = `Hello, ${nameVal}!`;
+        document.getElementById('greetingName').style.display = 'block';
+      } else {
+        document.getElementById('greetingName').style.display = 'none';
+      }
+
+      const totalDays = Math.floor(Math.abs(today - birth) / (1000 * 60 * 60 * 24));
+      document.getElementById('r-total-days').innerText = totalDays.toLocaleString();
+
+      calculateNextBirthday(birth, today);
+
+      if (birth.getDate() === today.getDate() && birth.getMonth() === today.getMonth()) {
+        fireConfetti();
+      }
+
+      document.getElementById('resultContainer').classList.add('show');
+    }
+
+    function calculateNextBirthday(birthDate, today) {
+      let nextBday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      if (today > nextBday && (today.getDate() !== nextBday.getDate() || today.getMonth() !== nextBday.getMonth())) {
+        nextBday.setFullYear(today.getFullYear() + 1);
+      }
+      
+      let diffTime = nextBday - today;
+      let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      let m = Math.floor(diffDays / 30.44);
+      let d = Math.floor(diffDays % 30.44);
+      
+      if (diffDays === 0) {
+        document.getElementById('next-bday').innerText = "Today is your Birthday! 🎉";
+      } else {
+        document.getElementById('next-bday').innerText = `${m} Months, ${d} Days`;
+      }
+    }
+
+    function fireConfetti() {
+      var duration = 3 * 1000;
+      var animationEnd = Date.now() + duration;
+      var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+      var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        var particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }));
+      }, 250);
+    }
+
+    function saveProfile() {
+      const name = document.getElementById('personName').value.trim();
+      const date = document.getElementById('birthDate').value;
+      if(!name || !date) { alert("Please enter both Name and Date to save!"); return; }
+
+      let profiles = JSON.parse(localStorage.getItem('savedProfiles')) || [];
+      profiles.push({ name, date });
+      localStorage.setItem('savedProfiles', JSON.stringify(profiles));
+      loadProfiles();
+      document.getElementById('personName').value = '';
+    }
+
+    function loadProfiles() {
+      let profiles = JSON.parse(localStorage.getItem('savedProfiles')) || [];
+      const section = document.getElementById('savedSection');
+      const list = document.getElementById('profileList');
+      list.innerHTML = '';
+
+      if (profiles.length > 0) {
+        section.style.display = 'block';
+        profiles.forEach((p, index) => {
+          let chip = document.createElement('div');
+          chip.className = 'profile-chip';
+          chip.innerHTML = `<span onclick="fillProfile('${p.name}', '${p.date}')">${p.name}</span> 
+                            <span class="delete-chip" onclick="deleteProfile(${index})" title="Delete">&times;</span>`;
+          list.appendChild(chip);
+        });
+      } else {
+        section.style.display = 'none';
+      }
+    }
+
+    function fillProfile(name, date) {
+      document.getElementById('personName').value = name;
+      document.getElementById('birthDate').value = date;
+      calculateAge();
+    }
+
+    function deleteProfile(index) {
+      let profiles = JSON.parse(localStorage.getItem('savedProfiles')) || [];
+      profiles.splice(index, 1);
+      localStorage.setItem('savedProfiles', JSON.stringify(profiles));
+      loadProfiles();
+    }
+
+    // --- Updated Capture Screenshot Logic ---
+    function downloadCard() {
+      const card = document.getElementById('captureArea');
+      const btn = document.getElementById('downloadBtn');
+      const settings = document.getElementById('settingsBtn');
+      const savedSec = document.getElementById('savedSection');
+      const saveBtn = document.getElementById('saveBtn');
+      const calcBtn = document.querySelector('.btn-primary');
+
+      // Get the name entered by the user to use as the filename
+      const userName = document.getElementById('personName').value.trim();
+      let fileName = userName ? `Age_Card_${userName.replace(/\s+/g, '_')}.png` : 'Age_Card_Shuvo.png';
+
+      btn.style.display = 'none';
+      settings.style.display = 'none';
+      savedSec.style.display = 'none';
+      saveBtn.style.display = 'none';
+      calcBtn.style.display = 'none';
+
+      html2canvas(card, { backgroundColor: getComputedStyle(document.body).backgroundColor }).then(canvas => {
+        let link = document.createElement('a');
+        link.download = fileName; // Assigning the dynamic filename
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        btn.style.display = 'block';
+        settings.style.display = 'block';
+        saveBtn.style.display = 'block';
+        calcBtn.style.display = 'block';
+        loadProfiles();
+      });
     }
   </script>
 </body>
