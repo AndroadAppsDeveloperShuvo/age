@@ -80,11 +80,18 @@
     /* Inputs */
     .input-group { margin-bottom: 18px; text-align: left; }
     .input-group label { display: block; font-size: 14px; color: var(--text-label); margin-bottom: 8px; font-weight: 700; }
+    
     input[type="text"], input[type="date"] {
       width: 100%; padding: 14px; border: 2px solid var(--border-color); background: var(--input-bg);
       color: var(--text-main); border-radius: 10px; font-size: 15px; outline: none; font-weight: 600;
+      height: 52px; /* Fix for iOS jumping height */
     }
     input:focus { border-color: var(--primary); }
+
+    /* Fix Dark Mode Calendar Icon Visibility */
+    [data-theme="dark"] ::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
 
     /* Buttons */
     .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -186,7 +193,8 @@
     </div>
     <div class="input-group">
       <label>Date of Birth</label>
-      <input type="date" id="birthDate">
+      <!-- Smart Placeholder Trick for iOS -->
+      <input type="text" id="birthDate" placeholder="Select Date of Birth" onfocus="(this.type='date')" onblur="if(!this.value) this.type='text'">
     </div>
 
     <div class="btn-group" id="actionButtons">
@@ -370,6 +378,11 @@
       
       showToast("Profile Saved!", '#10b981');
       document.getElementById('personName').value = '';
+      
+      // Reset Date input state
+      const bdInput = document.getElementById('birthDate');
+      bdInput.value = '';
+      bdInput.type = 'text'; 
     }
 
     function loadProfiles() {
@@ -394,7 +407,12 @@
 
     function fillProfile(name, date) {
       document.getElementById('personName').value = name;
-      document.getElementById('birthDate').value = date;
+      
+      // Ensure the input type is date before setting the value
+      const bdInput = document.getElementById('birthDate');
+      bdInput.type = 'date';
+      bdInput.value = date;
+      
       calculateAge();
     }
 
